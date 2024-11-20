@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "rn-material-kit-free",
+    "description": "React Native - Material Kit Free",
+    "slug": "rn-material-kit-free",
+    "privacy": "unlisted",
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "version": "1.8.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#ffffff"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.myapp.android",
+      "versionCode": 1,
+      "icon": "./assets/android-icon.png",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "eadc2080-b8a0-4f56-87c0-88c958af23ae"
+      }
+    }
+  }
+}
