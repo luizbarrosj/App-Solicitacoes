@@ -9,7 +9,9 @@ import HomeScreen from "../screens/Home";
 import OnboardingScreen from "../screens/Onboarding";
 import ProScreen from "../screens/Pro";
 import ProfileScreen from "../screens/Profile";
+import CadastroScreen from "../screens/Cadastro";
 import CampanhaScreen from "../screens/Campanha";
+import SolicitacoesScreen from "../screens/Solicitacoes";
 import VoreScreen from "../screens/Vote";
 import React from "react";
 import SettingsScreen from "../screens/Settings";
@@ -62,21 +64,51 @@ function ProfileStack(props) {
 function CampanhaStack(props) {
   return (
     <Stack.Navigator
-      initialRouteName="Campanha"
+     /* initialRouteName="Campanha"
+      screenOptions={{
+        mode: "card",
+        headerShown: "screen",
+      }}*/
+    >
+      <Stack.Screen
+        name="Campanha"
+        component={CampanhaScreen}
+      /*  options={{
+          header: ({ navigation, scene }) => (
+            <Header
+              white
+              transparent
+              title="Campanha"
+              scene={scene}
+              navigation={navigation}
+            />
+          ),
+          headerTransparent: true,
+        }}*/
+      />
+    </Stack.Navigator>
+  );
+}
+
+
+function CadastroStack(props) {
+  return (
+    <Stack.Navigator
+      initialRouteName="Cadastro"
       screenOptions={{
         mode: "card",
         headerShown: "screen",
       }}
     >
       <Stack.Screen
-        name="Campanha"
-        component={CampanhaScreen}
+        name="Cadastro"
+        component={CadastroScreen}
         options={{
           header: ({ navigation, scene }) => (
             <Header
               white
               transparent
-              title="Campanha"
+              title="Cadastro"
               scene={scene}
               navigation={navigation}
             />
@@ -232,9 +264,40 @@ function AppStack(props) {
           ),
         }}
       />
+      
       <Drawer.Screen
         name="Campanha"
-        component={CampanhaStack}
+        component={CampanhaScreen}
+        options={{
+          drawerIcon: ({ focused }) => (
+            <Icon
+              size={16}
+              name="md-woman"
+              family="ionicon"
+              color={focused ? "white" : materialTheme.COLORS.MUTED}
+              style={{ marginLeft: 4, marginRight: 4 }}
+            />
+          ),
+        }}
+      />
+      <Drawer.Screen
+        name="Solicitações"
+        component={SolicitacoesScreen}
+        options={{
+          drawerIcon: ({ focused }) => (
+            <Icon
+              size={16}
+              name="md-woman"
+              family="ionicon"
+              color={focused ? "white" : materialTheme.COLORS.MUTED}
+              style={{ marginLeft: 4, marginRight: 4 }}
+            />
+          ),
+        }}
+      />
+        <Drawer.Screen
+        name="Relatorios"
+        component={SolicitacoesScreen}
         options={{
           drawerIcon: ({ focused }) => (
             <Icon
@@ -414,6 +477,8 @@ export default function OnboardingStack(props) {
         }}
       />
       <Stack.Screen name="App" component={AppStack} />
+      <Stack.Screen name="Login" component={OnboardingStack} />
+      <Stack.Screen name="Cadastro" component={CadastroStack} />
     </Stack.Navigator>
   );
 }

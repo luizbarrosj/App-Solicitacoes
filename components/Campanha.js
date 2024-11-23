@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { StyleSheet, Dimensions, Image, TouchableWithoutFeedback } from 'react-native';
 import { Block, Text, theme } from 'galio-framework';
+import { useRoute } from '@react-navigation/native';
 
 import materialTheme from '../constants/Theme';
 
@@ -19,7 +20,7 @@ const Campanha = ({ product, horizontal, full, style, priceColor, imageStyle }) 
           <Image source={{ uri: product.image }} style={imageStyles} />
         </Block>
       </TouchableWithoutFeedback>
-      <TouchableWithoutFeedback onPress={() => navigation.navigate('Campanha', { product: product })}>
+      <TouchableWithoutFeedback onPress={() =>  navigation.navigate('Campanha', { product })}>
         <Block flex space="between" style={styles.productDescription}>
           <Text size={14} style={styles.productTitle}>{product.title}</Text>
           

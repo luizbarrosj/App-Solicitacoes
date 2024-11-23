@@ -1,13 +1,13 @@
-import React from "react";
+import React, { useState, useEffect } from 'react';
 import { TouchableWithoutFeedback, ScrollView, StyleSheet, Image } from "react-native";
 import { Block, Text, theme } from "galio-framework";
 import { useSafeArea } from "react-native-safe-area-context";
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Icon, Drawer as DrawerCustomItem } from '../components/';
 import { Images, materialTheme } from "../constants/";
 
 
-function CustomDrawerContent({
+function  CustomDrawerContent({
   drawerPosition,
   navigation,
   profile,
@@ -16,9 +16,33 @@ function CustomDrawerContent({
   ...rest
 }) {
   const insets = useSafeArea();
+  const [user, setUser] = useState(null);
   const screens = [
-    "Home"
+    "Home",
+    
   ];
+
+  
+  if(user?.perfil==="admin"){
+    screens.push("Relatorios")
+    screens.push("Solicitações")
+  }
+    // Busca os dados do usuário no AsyncStorage
+    useEffect(() => {
+      const fetchUserData = async () => {
+        try {
+          const userData = await AsyncStorage.getItem('user');
+          if (userData) {
+            const parsedUser = JSON.parse(userData).userData;
+            setUser(parsedUser);
+          }
+        } catch (error) {
+          console.error("Erro ao buscar dados do usuário:", error);
+        }
+      };
+  
+      fetchUserData();
+    }, []);
   return (
     <Block
       style={styles.container}
@@ -29,9 +53,12 @@ function CustomDrawerContent({
           onPress={() => navigation.navigate("Profile")}
         >
           <Block style={styles.profile}>
-            {/*<Image source={{ uri: profile.avatar }} style={styles.avatar} />*/}
+            {<Image source={{ uri: profile.avatar }} style={styles.avatar} />}
             <Text h5 color={"white"}>
               {profile.name}
+            </Text>
+            <Text h5 color={"white"}>
+              {user?.name}
             </Text>
           </Block>
         </TouchableWithoutFeedback>
@@ -51,12 +78,16 @@ function CustomDrawerContent({
         >
           {screens.map((item, index) => {
             return (
+              <>
               <DrawerCustomItem
                 title={item}
                 key={index}
                 navigation={navigation}
                 focused={state.index === index ? true : false}
               />
+
+              </> 
+              
             );
           })}
         </ScrollView>

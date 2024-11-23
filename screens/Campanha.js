@@ -1,130 +1,168 @@
 import React from 'react';
-import { Text, TextInput, StyleSheet, TouchableOpacity,Dimensions } from 'react-native';
-import { Picker } from '@react-native-picker/picker';
-
+import { Text, TextInput, StyleSheet, TouchableOpacity, View, Alert, Image, Button } from 'react-native';
 import { Block } from 'galio-framework';
+import { materialTheme } from '../constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { api } from '../services/api';
 
-import { Button, Icon } from '../components';
-import { Images, materialTheme } from '../constants';
-import { HeaderHeight } from "../constants/utils";
-
-const { width, height } = Dimensions.get('screen');
-const thumbMeasure = (width - 48 - 32) / 3;
+import * as ImagePicker from 'expo-image-picker';
+import { Picker } from '@react-native-picker/picker';
 
 export default class Campanha extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      nome: '',
-      email: '',
-      whatsapp: '',
-      cargo: '', // opções: Acadêmico, Docente, Funcionário
-      errorMessage: '', // Para armazenar mensagens de erro
+      comentario: '', // Texto do comentário
+      errorMessage: '', // Mensagem de erro
+      imageUri: null, // URI da imagem selecionada
+      idenfidicado: 'Sim',
     };
   }
 
-  handleSubmit = () => {
-    const { nome, email, whatsapp, cargo } = this.state;
-    console.log('Formulário enviado:', { nome, email, whatsapp, cargo });
-    // Adicione lógica para enviar os dados
-const eleitor = {
-  name: nome,
-  email: email,
-  whatsapp: whatsapp,
-  cargo: cargo
-}
+  // Função para selecionar a imagem
+  pickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images, // Correção para MediaTypeOptions
+        allowsEditing: true,
+        quality: 1,
+      });
 
-if (!nome || !email || !whatsapp || !cargo) {
+      if (!result.canceled) {
+        this.setState({ imageUri: result.assets[0].uri }); // Obtendo a URI da imagem
+      }
+    } catch (error) {
+      console.error("Erro ao selecionar imagem:", error);
+    }
+  };
 
-  console.log('Formulário nao enviado:', { nome, email, whatsapp, cargo });
-   this.setState({ errorMessage: 'Todos os campos são obrigatórios.' });
-  return; // Não envia os dados se algum campo obrigatório estiver vazio
-}else{
-// Se os campos estão preenchidos, limpa a mensagem de erro
-this.setState({ errorMessage: '' });
+  handleSubmit = async () => {
+    const { comentario, idenfidicado, imageUri } = this.state;
+    const { product } = this.props.route.params; // Acessa o product
 
-// Envia os dados ou navega para outra tela
-console.log('Formulário enviado:', { nome, email, whatsapp, cargo });
+    if (!comentario) {
+      this.setState({ errorMessage: 'Digite um comentário.' });
+      return;
+    }
 
- // Resetar os campos
- this.setState({
-  nome: '',
-  email: '',
-  whatsapp: '',
-  cargo: '',
-});
-
-    this.props.navigation.navigate('Votar', { eleitor: eleitor })
-
-}
+    try {
+      this.setState({ errorMessage: '' });
+      const userData = await AsyncStorage.getItem('user');
+      const user = JSON.parse(userData).userData;
 
 
+console.log(idenfidicado === 'Não' ? 0 : user.id);
+
+      const voto = {
+        campanha: product.title,
+        descricao: comentario,
+        idusuario: idenfidicado === 'Não' ? 0 : user.id,
+        imagem: imageUri, // Enviando a imagem junto (se necessário)
+      };
+
+      const { data, status } = await api.post('/votos/', voto);
+
+      if (status === 200 || status === 201) {
+        Alert.alert('Formulário enviado com sucesso!');
+
+        if (imageUri) {
+          const formData = new FormData();
+
+          // Criação do arquivo com os detalhes corretos
+          const file = {
+            uri: imageUri,
+            name: imageUri.split('/').pop(), // Obtendo o nome do arquivo a partir da URI
+            type: 'image/jpeg', // Altere para 'image/png' se necessário
+          };
+
+          formData.append("file", file);
+
+          try {
+            // Enviando o formulário com a imagem
+            const uploadResponse = await api.post(`/votos/${data.id}/media-upload`, formData, {
+              headers: {
+                'Content-Type': 'multipart/form-data', // Configuração correta para uploads
+              },
+            });
+
+            // Verifica o status da resposta
+            if (uploadResponse.status === 200) {
+              Alert.alert('Imagem enviada com sucesso!');
+            } else {
+              Alert.alert('Erro ao enviar a imagem. Status:', uploadResponse.status.toString());
+            }
+          } catch (uploadError) {
+            console.error('Erro no upload da imagem:', uploadError);
+            Alert.alert('Erro no upload da imagem', uploadError.message);
+          }
+        }
+
+
+      } else {
+        Alert.alert('Formulário não enviado!');
+      }
+
+      this.setState({
+        comentario: '',
+        errorMessage: '',
+        imageUri: null,
+        idenfidicado: '',
+      });
+
+      this.props.navigation.navigate('Home');
+    } catch (error) {
+      Alert.alert('Erro ao enviar formulário', error.message);
+    }
   };
 
   render() {
-    const { nome, email, whatsapp, cargo,errorMessage  } = this.state;
+    const { comentario, idenfidicado, errorMessage, imageUri } = this.state;
+    const { product } = this.props.route.params;
 
     return (
       <Block flex style={styles.container}>
-        <Text style={styles.title}>Formulário de Cadastro</Text>
- {/* Mensagem de erro */}
- {errorMessage ? (
-          <Text style={styles.error}>{errorMessage}</Text>
-        ) : null}
-        {/* Campo Nome */}
+        <Text style={styles.title}>Formulário de {product.title}</Text>
+
+        {/* Mensagem de erro */}
+        {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
+
         <Block>
-          <Text style={styles.label}>Nome:</Text>
+          <Text style={styles.label}>Registre seu comentário sobre {product.title}:</Text>
           <TextInput
-            style={styles.input}
-            placeholder="Digite seu nome"
-            value={nome}
-            onChangeText={(text) => this.setState({ nome: text })}
+            style={styles.textArea}
+            placeholder="Escreva seu comentário aqui"
+            multiline
+            numberOfLines={5}
+            value={comentario}
+            onChangeText={(text) => this.setState({ comentario: text })}
           />
         </Block>
 
-        {/* Campo Email */}
-        <Block>
-          <Text style={styles.label}>Email:</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Digite seu email"
-            keyboardType="email-address"
-            value={email}
-            onChangeText={(text) => this.setState({ email: text })}
-          />
+        {product.title == "Denuncia" && (
+          <Block>
+            <Text style={styles.label}>Deseja se identificar?:</Text>
+            <Picker
+              selectedValue={idenfidicado}
+              style={styles.input}
+              onValueChange={(itemValue) => this.setState({ idenfidicado: itemValue })}
+            >
+              <Picker.Item label="Sim" value="Sim" />
+              <Picker.Item label="Não" value="Não" />
+
+            </Picker>
+          </Block>
+
+        )}
+
+
+        <Block style={styles.blockSpacing}>
+          <Button title="Selecionar Imagem" onPress={this.pickImage} />
+          {imageUri && <Image source={{ uri: imageUri }} style={styles.image} />}
         </Block>
 
-        {/* Campo WhatsApp */}
-        <Block>
-          <Text style={styles.label}>WhatsApp:</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Digite seu número de WhatsApp"
-            keyboardType="phone-pad"
-            value={whatsapp}
-            onChangeText={(text) => this.setState({ whatsapp: text })}
-          />
-        </Block>
-
-        {/* Campo Cargo */}
-        <Block>
-          <Text style={styles.label}>Cargo:</Text>
-          <Picker
-            selectedValue={cargo}
-            style={styles.input}
-            onValueChange={(itemValue) => this.setState({ cargo: itemValue })}
-          >
-            <Picker.Item label="Selecione o cargo" value="" />
-            <Picker.Item label="Acadêmico" value="Acadêmico" />
-            <Picker.Item label="Docente" value="Docente" />
-            <Picker.Item label="Funcionário" value="Funcionário" />
-          </Picker>
-        </Block>
-
-        {/* Botão de Enviar */}
         <Block>
           <TouchableOpacity style={styles.button} onPress={this.handleSubmit}>
-            <Text style={styles.buttonText}>Continuar</Text>
+            <Text style={styles.buttonText}>Enviar</Text>
           </TouchableOpacity>
         </Block>
       </Block>
@@ -138,11 +176,8 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#fff',
   },
-  error: {
-    color: 'red',
-    fontSize: 16,
-    marginBottom: 10,
-    textAlign: 'center',
+  blockSpacing: {
+    marginBottom: 20,
   },
   title: {
     fontSize: 24,
@@ -150,21 +185,22 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
-  label: { 
+  label: {
     fontSize: 16,
     marginBottom: 8,
     color: '#333',
   },
-  input: {
+  textArea: {
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 5,
     padding: 10,
     marginBottom: 15,
     fontSize: 16,
+    height: 100,
   },
   button: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: materialTheme.COLORS.BUTTON_COLOR,
     padding: 15,
     borderRadius: 5,
     alignItems: 'center',
@@ -173,5 +209,17 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  error: {
+    color: 'red',
+    fontSize: 16,
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  image: {
+    width: 200,
+    height: 200,
+    marginTop: 20,
+    borderRadius: 10,
   },
 });

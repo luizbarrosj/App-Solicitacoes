@@ -7,6 +7,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import * as SplashScreen from "expo-splash-screen";
 import { Images, products, materialTheme } from "./constants/";
 import Screens from "./navigation/Screens";
+//global.Buffer = Buffer; 
 
 // Before rendering any navigation stack
 import { enableScreens } from "react-native-screens";

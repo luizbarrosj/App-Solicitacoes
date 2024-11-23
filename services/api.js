@@ -1,8 +1,7 @@
-import axios from "axios";
+import axios from 'axios';
 
+// Criação da instância do Axios
 const api = axios.create({
-	baseURL: process.env.REACT_APP_BACKEND_URL,
-	//withCredentials: true,
+  baseURL: 'http://192.168.1.10:9099', // Substitua pela URL do seu backend
 });
-
-export default api;
+export { api };  // Certifique-se de exportar a instância do axios
